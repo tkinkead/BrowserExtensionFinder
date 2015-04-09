@@ -2,8 +2,16 @@
 Imports Newtonsoft.Json.Linq
 
 Module Module1
+    Public ExemptionList As New System.Collections.Generic.List(Of String)
+    Public outputType As String = "Console"
 
     Sub Main()
+        ParseArguments()
+
+        If File.Exists("exemption.chrome") Then
+            LoadExemptionList()
+        End If
+
         Dim di As New IO.DirectoryInfo("C:\Users")
         Dim Dirs() As IO.DirectoryInfo = di.GetDirectories()
 
@@ -24,14 +32,37 @@ Module Module1
         Console.ReadLine()
     End Sub
 
+    Sub ParseArguments()
+        '/type type (CSV) (optional)
+        '/help help (optional)
+
+        Dim typeArgument As String = "--type="
+        Dim typeName As String = ""
+        Dim helpArgument As String = "--help"
+
+        For Each s As String In My.Application.CommandLineArgs
+            If s.ToLower.StartsWith(helpArgument) Then
+                WriteHelpText()
+                Environment.Exit(0)
+            ElseIf s.ToLower.StartsWith(typeArgument) Then
+                outputType = "CSV"
+            Else
+                WriteHelpText()
+                Environment.Exit(0)
+            End If
+        Next
+    End Sub
+
     Sub OutputFirefoxData(path As String)
         Try
             Dim difirefox As New IO.DirectoryInfo(path)
             Dim firefoxdirs() As IO.DirectoryInfo = difirefox.GetDirectories()
 
             For Each directory As IO.DirectoryInfo In firefoxdirs
-                Console.WriteLine("FIREFOX - " + directory.FullName)
-                Console.WriteLine("-----------------------------------------------------")
+                If outputType = "Console" Then
+                    Console.WriteLine("FIREFOX - " + directory.FullName)
+                    Console.WriteLine("-----------------------------------------------------")
+                End If
 
                 If System.IO.Directory.Exists(directory.FullName) Then
                     Dim firefoxjson As String = File.ReadAllText(directory.FullName + "\addons.json")
@@ -52,10 +83,7 @@ Module Module1
                                     strType = subitem("type")
                                     strVersion = subitem("version")
 
-                                    Console.WriteLine("Name: " + strName)
-                                    Console.WriteLine("Type: " + strType)
-                                    Console.WriteLine("Version: " + strVersion)
-                                    Console.WriteLine("")
+                                    FirefoxWriteOut(strName, strType, strVersion, directory.FullName)
                                 Next
                         End Select
 
@@ -70,19 +98,19 @@ Module Module1
 
     Sub OutputChromeData(path As String)
         Try
-            Dim ExemptionList As New System.Collections.Generic.List(Of String)
-            'Add exempted extensions here - REWRITE THIS TO ACCEPT EXTENSION FILE INPUT
-            ExemptionList.Add("aapocclcgogkmnckokdopfmhonfmgoek")
-
             Dim dichrome As New IO.DirectoryInfo(path)
             Dim chromedirs() As IO.DirectoryInfo = dichrome.GetDirectories()
 
-            Console.WriteLine("CHROME - " + path)
-            Console.WriteLine("-----------------------------------------------------")
+            If outputType = "Console" Then
+                Console.WriteLine("CHROME - " + path)
+                Console.WriteLine("-----------------------------------------------------")
+            End If
 
             For Each directory As IO.DirectoryInfo In chromedirs
                 If Not ExemptionList.Contains(directory.Name) Then
-                    Console.WriteLine(directory.FullName)
+                    If outputType = "Console" Then
+                        Console.WriteLine(directory.FullName)
+                    End If
 
                     Dim subdir As New IO.DirectoryInfo(directory.FullName)
                     Dim subdirs() As IO.DirectoryInfo = subdir.GetDirectories()
@@ -92,10 +120,8 @@ Module Module1
                         Dim chromejson As String = File.ReadAllText(extdir.FullName + "\manifest.json")
                         Dim jss As Object = New System.Web.Script.Serialization.JavaScriptSerializer().Deserialize(Of Object)(chromejson)
 
-                        Console.WriteLine("Name: " + jss("name"))
-                        Console.WriteLine("Version: " + jss("version"))
-                        Console.WriteLine("Description: " + jss("description"))
-                        Console.WriteLine("")
+                        ChromeWriteOut(jss("name"), jss("version"), jss("description"), extdir.FullName)
+
                     Next
                 End If
             Next
@@ -117,7 +143,50 @@ Module Module1
         Public Property isblocklisted As String
     End Class
 
+    Sub FirefoxWriteOut(name As String, type As String, version As String, path As String)
+        If outputType = "CSV" Then
+            'Browser, Path, Name, Verison, Description
+            Console.WriteLine("'Firefox'," + path + "," + name + "," + version + "," + type)
+        ElseIf outputType = "Console" Then
+            Console.WriteLine("Name: " + name)
+            Console.WriteLine("Type: " + type)
+            Console.WriteLine("Version: " + version)
+            Console.WriteLine("")
+        End If
+    End Sub
 
+    Sub ChromeWriteOut(name As String, version As String, description As String, path As String)
+        If outputType = "CSV" Then
+            'Browser, Path, Name, Verison, Description
+            Console.WriteLine("'Chrome'," + path + "," + name + "," + version + "," + description)
+        ElseIf outputType = "Console" Then
+            Console.WriteLine("Name: " + name)
+            Console.WriteLine("Version: " + version)
+            Console.WriteLine("Description: " + description)
+            Console.WriteLine("")
+        End If
+    End Sub
+
+    Sub LoadExemptionList()
+        Using r As StreamReader = New StreamReader("exemption.chrome")
+            Dim line As String
+
+            line = r.ReadLine
+
+            Do While (Not line Is Nothing)
+                line = line.Trim()
+                ExemptionList.Add(line)
+                line = r.ReadLine
+            Loop
+        End Using
+    End Sub
+
+    Sub WriteHelpText()
+        Console.WriteLine("Usage:")
+        Console.WriteLine("--type=[type] -- Specify output type - options: Console (default), CSV")
+        Console.WriteLine("--help -- This help prompt")
+        Console.WriteLine("")
+    End Sub
     'Dim dt As New DataTable
 
     ''Dim cnn As New SQLite.SQLiteConnection("Data Source=C:Users\Tanner\AppData\Roaming\Mozilla\Firefox\Profiles\9ztd0rkg.default\webappsstore.sqlite")
