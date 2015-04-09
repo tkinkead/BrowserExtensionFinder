@@ -15,6 +15,10 @@ Module Module1
         Dim di As New IO.DirectoryInfo("C:\Users")
         Dim Dirs() As IO.DirectoryInfo = di.GetDirectories()
 
+        If outputType = "CSV" Then
+            Console.WriteLine("Browser, ChromeID, Path, Name, Verison, Description")
+        End If
+
         For Each directory As IO.DirectoryInfo In Dirs
             Dim firefoxpath As String = directory.FullName + "\AppData\Roaming\Mozilla\Firefox\Profiles"
 
@@ -29,7 +33,6 @@ Module Module1
             End If
         Next
 
-        Console.ReadLine()
     End Sub
 
     Sub ParseArguments()
@@ -120,7 +123,7 @@ Module Module1
                         Dim chromejson As String = File.ReadAllText(extdir.FullName + "\manifest.json")
                         Dim jss As Object = New System.Web.Script.Serialization.JavaScriptSerializer().Deserialize(Of Object)(chromejson)
 
-                        ChromeWriteOut(jss("name"), jss("version"), jss("description"), extdir.FullName)
+                        ChromeWriteOut(jss("name"), jss("version"), jss("description"), extdir.FullName, directory.Name)
 
                     Next
                 End If
@@ -145,8 +148,8 @@ Module Module1
 
     Sub FirefoxWriteOut(name As String, type As String, version As String, path As String)
         If outputType = "CSV" Then
-            'Browser, Path, Name, Verison, Description
-            Console.WriteLine("'Firefox'," + path + "," + name + "," + version + "," + type)
+            'Browser, ChromeID, Path, Name, Verison, Description
+            Console.WriteLine("'Firefox', ," + path + "," + name + "," + version + "," + type)
         ElseIf outputType = "Console" Then
             Console.WriteLine("Name: " + name)
             Console.WriteLine("Type: " + type)
@@ -155,10 +158,10 @@ Module Module1
         End If
     End Sub
 
-    Sub ChromeWriteOut(name As String, version As String, description As String, path As String)
+    Sub ChromeWriteOut(name As String, version As String, description As String, path As String, chromeid As string)
         If outputType = "CSV" Then
-            'Browser, Path, Name, Verison, Description
-            Console.WriteLine("'Chrome'," + path + "," + name + "," + version + "," + description)
+            'Browser, ChromeID, Path, Name, Verison, Description
+            Console.WriteLine("'Chrome'," + chromeid + "," + path + "," + name + "," + version + "," + description)
         ElseIf outputType = "Console" Then
             Console.WriteLine("Name: " + name)
             Console.WriteLine("Version: " + version)
