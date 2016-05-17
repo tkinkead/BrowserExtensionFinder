@@ -4,6 +4,7 @@ Imports Newtonsoft.Json.Linq
 Module Module1
     Public ExemptionList As New System.Collections.Generic.List(Of String)
     Public outputType As String = "Console"
+    Public excludedList As New List(Of String)
 
     Sub Main()
         ParseArguments()
@@ -30,9 +31,14 @@ Module Module1
 
             If System.IO.Directory.Exists(chromepath) Then
                 OutputChromeData(chromepath)
+                If excludedList.Count <> 0 And outputType <> "CSV" Then
+                    OutputExcludedList()
+                End If
             End If
         Next
 
+        'Command to pause console output for debugging
+        'Console.ReadKey()  
     End Sub
 
     Sub ParseArguments()
@@ -48,7 +54,15 @@ Module Module1
                 WriteHelpText()
                 Environment.Exit(0)
             ElseIf s.ToLower.StartsWith(typeArgument) Then
-                outputType = "CSV"
+                Dim typeString As String
+                typeString = s.Remove(0, 7)
+                If typeString = "CSV" Or typeString = "Console" Then
+                    outputType = typeString
+                Else
+                    Console.WriteLine("Incorrect output type specified. Check --type argument for correctness.")
+                    WriteHelpText()
+                    Environment.Exit(0)
+                End If
             Else
                 WriteHelpText()
                 Environment.Exit(0)
@@ -126,6 +140,8 @@ Module Module1
                         ChromeWriteOut(jss("name"), jss("version"), jss("description"), extdir.FullName, directory.Name)
 
                     Next
+                ElseIf ExemptionList.Contains(directory.Name) Then
+                    excludedList.Add(directory.FullName)
                 End If
             Next
         Catch ex As Exception
@@ -178,7 +194,11 @@ Module Module1
 
             Do While (Not line Is Nothing)
                 line = line.Trim()
-                ExemptionList.Add(line)
+                If Not String.IsNullOrEmpty(line.ToString) Then
+                    If line(0) <> "#" Then
+                        ExemptionList.Add(line)
+                    End If
+                End If
                 line = r.ReadLine
             Loop
         End Using
@@ -211,4 +231,11 @@ Module Module1
     'firefoxjson = firefoxjson.Split("#")(1)
 
     'Dim jss As Object = New System.Web.Script.Serialization.JavaScriptSerializer().Deserialize(Of Object)(firefoxjson)
+
+    Sub OutputExcludedList()
+        Console.WriteLine("Excluded Chrome Items:")
+        For Each directory As String In excludedList
+            Console.WriteLine(directory)
+        Next
+    End Sub
 End Module

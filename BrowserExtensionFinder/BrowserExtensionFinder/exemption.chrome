@@ -1,3 +1,20 @@
-﻿aapocclcgogkmnckokdopfmhonfmgoek
+﻿# Exemption file for Chrome.  This is used to filter out default browser extensions from the report.
+# Put a 32 character Chrome extension ID by itself on a new line to filter from the report.
+# Any lines starting with "#" will be ignored.  
+
+# Google Slides
+aapocclcgogkmnckokdopfmhonfmgoek
+# Google Docs
+aohghmighlieiainnegkcijnfilokake
+# Google Drive
+apdfllckaahabafndbhieahigkjlhalf
+# YouTube
+blpcfgokakmgnkcojhhkbfbldkacnbeo
+# Google Search
 coobgpohoikkiipiblmjeljniedjpjpf
-Temp	
+# Google Sheets
+felcaaldnbdncclmgdcncolpebgiejap
+# Google Drive
+ghbmnnjooekpmoecnnnilnnbdlolhkhi
+# Google Mail
+pjkljhegncpnkpknbcohdijeoejaedia
