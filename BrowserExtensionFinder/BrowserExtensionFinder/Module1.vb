@@ -114,9 +114,8 @@ Module Module1
     End Sub
 
     Sub OutputChromeData(path As String)
-        Try
-            Dim dichrome As New IO.DirectoryInfo(path)
-            Dim chromedirs() As IO.DirectoryInfo = dichrome.GetDirectories()
+        Dim dichrome As New IO.DirectoryInfo(path)
+        Dim chromedirs() As IO.DirectoryInfo = dichrome.GetDirectories()
 
             If outputType = "Console" Then
                 Console.WriteLine("CHROME - " + path)
@@ -133,20 +132,44 @@ Module Module1
                     Dim subdirs() As IO.DirectoryInfo = subdir.GetDirectories()
 
                     For Each extdir As IO.DirectoryInfo In subdirs
-                        'Parse extdir\manifest.json
+                        'Parse [extensiondir]\manifest.json
                         Dim chromejson As String = File.ReadAllText(extdir.FullName + "\manifest.json")
                         Dim jss As Object = New System.Web.Script.Serialization.JavaScriptSerializer().Deserialize(Of Object)(chromejson)
 
-                        ChromeWriteOut(jss("name"), jss("version"), jss("description"), extdir.FullName, directory.Name)
+                    'Dim sChromeName As String
+                    'Dim sVersion As String
+                    'Dim sDescription As String
 
-                    Next
+                    '    If Not (String.IsNullOrEmpty(jss("name"))) Then
+                    '        sChromeName = jss("name")
+                    '    Else
+                    '        sChromeName = ""
+                    '    End If
+
+                    '    If Not (String.IsNullOrEmpty(jss("version"))) Then
+                    '        sVersion = jss("version")
+                    '    Else
+                    '        sVersion = ""
+                    '    End If
+
+                    'If Not (jss("description") Is Nothing) Then
+                    '    sDescription = jss("description")
+                    'Else
+                    '    sDescription = ""
+                    'End If
+                    Try
+                        ChromeWriteOut(jss("name"), jss("version"), jss("description"), extdir.FullName, directory.Name)
+                    Catch ex As Exception
+                        Console.WriteLine(ex.Message)
+                        Console.WriteLine("")
+                    End Try
+
+                Next
                 ElseIf ExemptionList.Contains(directory.Name) Then
                     excludedList.Add(directory.FullName)
                 End If
             Next
-        Catch ex As Exception
-            Console.WriteLine(ex.Message)
-        End Try
+
     End Sub
 
     Public Class firefoxaddon
@@ -175,15 +198,18 @@ Module Module1
     End Sub
 
     Sub ChromeWriteOut(name As String, version As String, description As String, path As String, chromeid As string)
-        If outputType = "CSV" Then
-            'Browser, ChromeID, Path, Name, Verison, Description
-            Console.WriteLine("'Chrome'," + chromeid + "," + path + "," + name + "," + version + "," + description)
-        ElseIf outputType = "Console" Then
-            Console.WriteLine("Name: " + name)
-            Console.WriteLine("Version: " + version)
-            Console.WriteLine("Description: " + description)
-            Console.WriteLine("")
-        End If
+        Try
+            If outputType = "CSV" Then
+                'Browser, ChromeID, Path, Name, Verison, Description
+                Console.WriteLine("'Chrome'," + chromeid + "," + path + "," + name + "," + version + "," + description)
+            ElseIf outputType = "Console" Then
+                Console.WriteLine("Name: " + name)
+                Console.WriteLine("Version: " + version)
+                Console.WriteLine("Description: " + description)
+                Console.WriteLine("")
+            End If
+        Catch
+        End Try
     End Sub
 
     Sub LoadExemptionList()
